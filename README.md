@@ -3,31 +3,62 @@
 ## Installation for Google Colab
 
 ### Environment setup
-!pip install torch==2.0.1 torchvision==0.15.2 --index-url https://download.pytorch.org/whl/cu118
+`!pip install torch==2.0.1 torchvision==0.15.2 --index-url https://download.pytorch.org/whl/cu118`
 
-!pip install causal-conv1d>=1.2.0
+`'!pip install causal-conv1d>=1.2.0'`
 
-!pip install mamba-ssm --no-cache-dir
+`!pip install mamba-ssm --no-cache-dir`
 
-!git clone https://github.com/ygong0712/nnU-Mamba
+`!git clone https://github.com/ygong0712/nnU-Mamba`
 
-%cd /content/nnU-Mamba/umamba
+`%cd /content/nnU-Mamba/umamba`
 
-!pip install -e .
-
-!rm -rf /content/nnU-Mamba/data/nnUNet_raw
-
-!rm -rf /content/nnU-Mamba/data/nnUNet_preprocessed
-
-!rm -rf /content/nnU-Mamba/data/nnUNet_results
-
-!cp -rp YOUR_PATH /content/nnU-Mamba/data
+`!pip install -e .`
 
 
+`!rm -rf /content/nnU-Mamba/data/nnUNet_raw`
 
-### Libs
+`!rm -rf /content/nnU-Mamba/data/nnUNet_preprocessed`
+
+`!rm -rf /content/nnU-Mamba/data/nnUNet_results`
+
+`!cp -rp YOUR_PATH /content/nnU-Mamba/data`
+
+
+
+
+### Python packages
+
+```bash
 import torch
 
 import mamba_ssm
 
 import os
+```
+
+## Preprocessing
+
+```bash
+nnUNetv2_plan_and_preprocess -d DATASET_ID --verify_dataset_integrity
+```
+
+
+## Train 3D models
+
+- Train 3D `U-Mamba_Enc` model
+
+```bash
+nnUNetv2_train DATASET_ID 3d_fullres all -tr nnUNetTrainerUMambaEnc
+```
+
+
+
+## Inference
+
+- Predict testing cases with `U-Mamba_Enc` model
+
+```bash
+nnUNetv2_predict -i INPUT_FOLDER -o OUTPUT_FOLDER -d DATASET_ID -c CONFIGURATION -f all -tr nnUNetTrainerUMambaEnc --disable_tta
+```
+
