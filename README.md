@@ -1,6 +1,6 @@
 # nnU-Mamba
  
-###Installation for Google Colab
+##Installation for Google Colab
 !pip install torch==2.0.1 torchvision==0.15.2 --index-url https://download.pytorch.org/whl/cu118
 !pip install causal-conv1d>=1.2.0
 !pip install mamba-ssm --no-cache-dir
