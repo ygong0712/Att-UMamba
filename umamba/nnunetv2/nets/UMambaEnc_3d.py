@@ -108,26 +108,38 @@ class BasicResBlock(nn.Module):
         ):
         super().__init__()
         
+        # First convolution, normalization, and activation
         self.conv1 = conv_op(input_channels, output_channels, kernel_size, stride=stride, padding=padding)
         self.norm1 = norm_op(output_channels, **norm_op_kwargs)
         self.act1 = nonlin(**nonlin_kwargs)
         
+        # Second convolution, normalization, and activation
         self.conv2 = conv_op(output_channels, output_channels, kernel_size, padding=padding)
         self.norm2 = norm_op(output_channels, **norm_op_kwargs)
         self.act2 = nonlin(**nonlin_kwargs)
         
+        # Optional 1x1 convolution for skip connection
         if use_1x1conv:
             self.conv3 = conv_op(input_channels, output_channels, kernel_size=1, stride=stride)
         else:
             self.conv3 = None
                   
     def forward(self, x):
+        # Forward pass through the first set of layers
         y = self.conv1(x)
         y = self.act1(self.norm1(y))  
+        
+        # Forward pass through the second set of layers
         y = self.norm2(self.conv2(y))
+        
+        # Adjust input dimensions if necessary
         if self.conv3:
             x = self.conv3(x)
+        
+        # Add the input (skip connection)
         y += x
+        
+        # Final activation
         return self.act2(y)
     
 class ResidualMambaEncoder(nn.Module):

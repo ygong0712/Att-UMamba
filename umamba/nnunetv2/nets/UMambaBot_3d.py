@@ -66,6 +66,39 @@ class MambaLayer(nn.Module):
 
         return out
 
+class SpatialAttentionLayer(nn.Module):
+    def __init__(self, dim, num_heads):
+        super(SpatialAttentionLayer, self).__init__()
+        self.dim = dim
+        self.num_heads = num_heads
+        self.query_conv = nn.Conv3d(dim, dim, kernel_size=1)
+        self.key_conv = nn.Conv3d(dim, dim, kernel_size=1)
+        self.value_conv = nn.Conv3d(dim, dim, kernel_size=1)
+        self.output_conv = nn.Conv3d(dim, dim, kernel_size=1)
+
+        self.softmax = nn.Softmax(dim=-1)
+
+    def forward(self, x):
+        B, C, H, W, D = x.shape
+
+        # Generate query, key, and value matrices
+        queries = self.query_conv(x).view(B, C, -1)
+        keys = self.key_conv(x).view(B, C, -1)
+        values = self.value_conv(x).view(B, C, -1)
+
+        # Attention score calculation
+        attention_scores = torch.bmm(queries.transpose(1, 2), keys) / (self.dim ** 0.5)
+        attention_weights = self.softmax(attention_scores)
+
+        # Weighted sum of values
+        attention_output = torch.bmm(values, attention_weights.transpose(1, 2))
+        attention_output = attention_output.view(B, C, H, W, D)
+
+        # Combine attention output with input using a convolution
+        out = self.output_conv(attention_output)
+
+        return out
+
 
 class BasicResBlock(nn.Module):
     def __init__(
@@ -431,12 +464,14 @@ class UMambaBot(nn.Module):
         )
 
         self.mamba_layer = MambaLayer(dim = features_per_stage[-1])
+        self.attention_layer = SpatialAttentionLayer(dim = features_per_stage[-1])
 
         self.decoder = UNetResDecoder(self.encoder, num_classes, n_conv_per_stage_decoder, deep_supervision)
 
     def forward(self, x):
         skips = self.encoder(x)
         skips[-1] = self.mamba_layer(skips[-1])
+        skips[-1] = self.attention_layer(skips[-1])
         return self.decoder(skips)
 
     def compute_conv_feature_map_size(self, input_size):
