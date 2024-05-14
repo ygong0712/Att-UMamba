@@ -67,7 +67,7 @@ class MambaLayer(nn.Module):
         return out
 
 class SpatialAttentionLayer(nn.Module):
-    def __init__(self, dim, num_heads):
+    def __init__(self, dim, num_heads = 8):
         super(SpatialAttentionLayer, self).__init__()
         self.dim = dim
         self.num_heads = num_heads
@@ -464,14 +464,14 @@ class UMambaBot(nn.Module):
         )
 
         self.mamba_layer = MambaLayer(dim = features_per_stage[-1])
-        self.attention_layer = SpatialAttentionLayer(dim = features_per_stage[-1])
+        self.attention_layer = SpatialAttentionLayer(dim = features_per_stage[-1], num_heads = 8)
 
         self.decoder = UNetResDecoder(self.encoder, num_classes, n_conv_per_stage_decoder, deep_supervision)
 
     def forward(self, x):
         skips = self.encoder(x)
-        skips[-1] = self.mamba_layer(skips[-1])
         skips[-1] = self.attention_layer(skips[-1])
+        skips[-1] = self.mamba_layer(skips[-1])
         return self.decoder(skips)
 
     def compute_conv_feature_map_size(self, input_size):
