@@ -66,37 +66,51 @@ class MambaLayer(nn.Module):
 
         return out
 
-class SpatialAttentionLayer(nn.Module):
+class MultiHeadAttentionLayer(nn.Module):
     def __init__(self, dim, num_heads = 8):
-        super(SpatialAttentionLayer, self).__init__()
+        super(MultiHeadAttentionLayer, self).__init__()
+        assert dim % num_heads == 0, "The dimension must be divisible by the number of heads"
         self.dim = dim
         self.num_heads = num_heads
+        self.head_dim = dim // num_heads
+        
+        # Linear layers to project input to queries, keys, and values for all heads
         self.query_conv = nn.Conv3d(dim, dim, kernel_size=1)
         self.key_conv = nn.Conv3d(dim, dim, kernel_size=1)
         self.value_conv = nn.Conv3d(dim, dim, kernel_size=1)
+        
+        # Output projection layer
         self.output_conv = nn.Conv3d(dim, dim, kernel_size=1)
 
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, x):
         B, C, H, W, D = x.shape
-
-        # Generate query, key, and value matrices
-        queries = self.query_conv(x).view(B, C, -1)
-        keys = self.key_conv(x).view(B, C, -1)
-        values = self.value_conv(x).view(B, C, -1)
-
+        
+        # Generate queries, keys, and values
+        queries = self.query_conv(x).view(B, self.num_heads, self.head_dim, -1)
+        keys = self.key_conv(x).view(B, self.num_heads, self.head_dim, -1)
+        values = self.value_conv(x).view(B, self.num_heads, self.head_dim, -1)
+        
+        # Transpose to get dimensions (B, num_heads, -1, head_dim)
+        queries = queries.permute(0, 1, 3, 2)
+        keys = keys.permute(0, 1, 3, 2)
+        values = values.permute(0, 1, 3, 2)
+        
         # Attention score calculation
-        attention_scores = torch.bmm(queries.transpose(1, 2), keys) / (self.dim ** 0.5)
+        attention_scores = torch.matmul(queries, keys.transpose(-1, -2)) / (self.head_dim ** 0.5)
         attention_weights = self.softmax(attention_scores)
-
+        
         # Weighted sum of values
-        attention_output = torch.bmm(values, attention_weights.transpose(1, 2))
+        attention_output = torch.matmul(attention_weights, values)
+        
+        # Reshape and concatenate heads
+        attention_output = attention_output.permute(0, 1, 3, 2).contiguous()
         attention_output = attention_output.view(B, C, H, W, D)
-
-        # Combine attention output with input using a convolution
+        
+        # Output projection
         out = self.output_conv(attention_output)
-
+        
         return out
 
 
@@ -464,7 +478,7 @@ class UMambaBot(nn.Module):
         )
 
         self.mamba_layer = MambaLayer(dim = features_per_stage[-1])
-        self.attention_layer = SpatialAttentionLayer(dim = features_per_stage[-1], num_heads = 8)
+        self.attention_layer = MultiHeadAttentionLayer(dim = features_per_stage[-1], num_heads = 16)
 
         self.decoder = UNetResDecoder(self.encoder, num_classes, n_conv_per_stage_decoder, deep_supervision)
 
