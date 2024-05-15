@@ -85,6 +85,8 @@ class MultiHeadAttentionLayer(nn.Module):
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, x):
+        if x.dtype == torch.float16:
+            x = x.type(torch.float32)
         B, C, H, W, D = x.shape
         
         # Generate queries, keys, and values
@@ -476,24 +478,15 @@ class UMambaBot(nn.Module):
             return_skips=True,
             stem_channels=stem_channels
         )
-        attention_layers = []
-        
-        for i in range(n_stages):
-            attention_layers.append(MultiHeadAttentionLayer(dim = features_per_stage[i], num_heads = features_per_stage[i] / 16))
-        '''   
-        self.attention_layer = MultiHeadAttentionLayer(dim = features_per_stage[-1], num_heads = 16)
-        '''
 
-        self.attention_layers = nn.ModuleList(attention_layers)
         self.mamba_layer = MambaLayer(dim = features_per_stage[-1])
-        
+        self.attention_layer = MultiHeadAttentionLayer(dim = features_per_stage[-1], num_heads = 16)
 
         self.decoder = UNetResDecoder(self.encoder, num_classes, n_conv_per_stage_decoder, deep_supervision)
 
     def forward(self, x):
         skips = self.encoder(x)
-        for i in range(len(skips)):
-            skips[i] = self.attention_layers[i](skips[i])
+        skips[-1] = self.attention_layer(skips[-1])
         skips[-1] = self.mamba_layer(skips[-1])
         return self.decoder(skips)
 
