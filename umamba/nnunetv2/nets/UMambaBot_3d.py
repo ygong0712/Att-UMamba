@@ -66,6 +66,53 @@ class MambaLayer(nn.Module):
 
         return out
 
+
+class AttentionGate(nn.Module):
+    def __init__(self, F_g, F_l):
+        super(AttentionGate, self).__init__()
+        self.W_g = nn.Sequential(
+            nn.Conv3d(F_g, F_g, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm3d(F_g)
+        )
+
+        self.W_x = nn.Sequential(
+            nn.Conv3d(F_l, F_l, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm3d(F_l)
+        )
+
+        self.psi = nn.Sequential(
+            nn.Conv3d(F_g, 1, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm3d(1),
+            nn.Sigmoid()
+        )
+
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self, g, x):
+        """
+        Forward pass of the attention gate.
+
+        Parameters:
+        - g: Gating signal (coarser scale feature map), shape (B, C, H, W, D)
+        - x: Input feature map (skip connection from encoder), shape (B, C, H, W, D)
+        
+        Returns:
+        - Attention-weighted feature map, same shape as input x
+        """
+        g1 = self.W_g(g)  # shape (B, C, H, W, D)
+        x1 = self.W_x(x)  # shape (B, C, H, W, D)
+
+        # Element-wise addition and activation
+        psi = self.relu(g1 + x1)  # shape (B, C, H, W, D)
+
+        # Compute attention coefficients
+        psi = self.psi(psi)  # shape (B, 1, H, W, D)
+
+        # Apply attention coefficients
+        return x * psi  # shape (B, C, H, W, D)
+
+
+'''
 class MultiHeadAttentionLayer(nn.Module):
     def __init__(self, dim, num_heads = 8):
         super(MultiHeadAttentionLayer, self).__init__()
@@ -85,6 +132,8 @@ class MultiHeadAttentionLayer(nn.Module):
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, x):
+        if x.dtype == torch.float16:
+            x = x.type(torch.float32)
         B, C, H, W, D = x.shape
         
         # Generate queries, keys, and values
@@ -112,6 +161,8 @@ class MultiHeadAttentionLayer(nn.Module):
         out = self.output_conv(attention_output)
         
         return out
+
+'''
 
 
 class BasicResBlock(nn.Module):
@@ -329,6 +380,7 @@ class UNetResDecoder(nn.Module):
 
         stages = []
         upsample_layers = []
+        self.attention_gates = nn.ModuleList()
 
         seg_layers = []
         for s in range(1, n_stages_encoder):
@@ -336,6 +388,8 @@ class UNetResDecoder(nn.Module):
             input_features_skip = encoder.output_channels[-(s + 1)]
             stride_for_upsampling = encoder.strides[-s]
 
+
+            self.attention_gates.append(AttentionGate(F_g=input_features_skip, F_l=input_features_skip))
 
             upsample_layers.append(UpsampleLayer(
                 conv_op = encoder.conv_op,
@@ -386,6 +440,8 @@ class UNetResDecoder(nn.Module):
         seg_outputs = []
         for s in range(len(self.stages)):
             x = self.upsample_layers[s](lres_input)
+            g = x
+            skips[-(s+2)] = self.attention_gates[s](g, skips[-(s+2)])
             x = torch.cat((x, skips[-(s+2)]), 1)
             x = self.stages[s](x)
             if self.deep_supervision:
@@ -476,24 +532,18 @@ class UMambaBot(nn.Module):
             return_skips=True,
             stem_channels=stem_channels
         )
-        attention_layers = []
-        
-        for i in range(n_stages):
-            attention_layers.append(MultiHeadAttentionLayer(dim = features_per_stage[i], num_heads = features_per_stage[i] / 16))
-        '''   
-        self.attention_layer = MultiHeadAttentionLayer(dim = features_per_stage[-1], num_heads = 16)
-        '''
 
-        self.attention_layers = nn.ModuleList(attention_layers)
         self.mamba_layer = MambaLayer(dim = features_per_stage[-1])
-        
+
+        #self.attention_layer = MultiHeadAttentionLayer(dim = features_per_stage[-1], num_heads = 16)
 
         self.decoder = UNetResDecoder(self.encoder, num_classes, n_conv_per_stage_decoder, deep_supervision)
 
     def forward(self, x):
         skips = self.encoder(x)
-        for i in range(len(skips)):
-            skips[i] = self.attention_layers[i](skips[i])
+
+        #skips[-1] = self.attention_layer(skips[-1])
+        
         skips[-1] = self.mamba_layer(skips[-1])
         return self.decoder(skips)
 
