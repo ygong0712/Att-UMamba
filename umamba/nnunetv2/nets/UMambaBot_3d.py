@@ -476,15 +476,24 @@ class UMambaBot(nn.Module):
             return_skips=True,
             stem_channels=stem_channels
         )
+        self.attention_layers = []
+        
+        for i in range(n_stages):
+            self.attention_layers.append(MultiHeadAttentionLayer(dim = features_per_stage[i], num_heads = features_per_stage[i] / 16))
+
+        '''   
+        self.attention_layer = MultiHeadAttentionLayer(dim = features_per_stage[-1], num_heads = 16)
+        '''
 
         self.mamba_layer = MambaLayer(dim = features_per_stage[-1])
-        self.attention_layer = MultiHeadAttentionLayer(dim = features_per_stage[-1], num_heads = 16)
+        
 
         self.decoder = UNetResDecoder(self.encoder, num_classes, n_conv_per_stage_decoder, deep_supervision)
 
     def forward(self, x):
         skips = self.encoder(x)
-        skips[-1] = self.attention_layer(skips[-1])
+        for i in range(len(skips)):
+            skips[i] = self.attention_layers[i](skips[i])
         skips[-1] = self.mamba_layer(skips[-1])
         return self.decoder(skips)
 
