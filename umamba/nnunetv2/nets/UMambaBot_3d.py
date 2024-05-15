@@ -476,15 +476,15 @@ class UMambaBot(nn.Module):
             return_skips=True,
             stem_channels=stem_channels
         )
-        self.attention_layers = []
+        attention_layers = []
         
         for i in range(n_stages):
-            self.attention_layers.append(MultiHeadAttentionLayer(dim = features_per_stage[i], num_heads = features_per_stage[i] / 16))
-
+            attention_layers.append(MultiHeadAttentionLayer(dim = features_per_stage[i], num_heads = features_per_stage[i] / 16))
         '''   
         self.attention_layer = MultiHeadAttentionLayer(dim = features_per_stage[-1], num_heads = 16)
         '''
 
+        self.attention_layers = nn.ModuleList(attention_layers)
         self.mamba_layer = MambaLayer(dim = features_per_stage[-1])
         
 
