@@ -46,20 +46,20 @@ nnUNetv2_plan_and_preprocess -d DATASET_ID --verify_dataset_integrity
 
 ## Train 3D models
 
-- Train 3D `U-Mamba_Enc` model
+- Train 3D `U-Mamba_Bot` model
 
 ```bash
-nnUNetv2_train DATASET_ID 3d_fullres all -tr nnUNetTrainerUMambaEnc
+nnUNetv2_train DATASET_ID 3d_fullres all -tr nnUNetTrainerUMambaBot
 ```
 
 
 
 ## Inference
 
-- Predict testing cases with `U-Mamba_Enc` model
+- Predict testing cases with `U-Mamba_Bot` model
 
 ```bash
-nnUNetv2_predict -i INPUT_FOLDER -o OUTPUT_FOLDER -d DATASET_ID -c CONFIGURATION -f all -tr nnUNetTrainerUMambaEnc --disable_tta
+nnUNetv2_predict -i INPUT_FOLDER -o OUTPUT_FOLDER -d DATASET_ID -c CONFIGURATION -f all -tr nnUNetTrainerUMambaBot --disable_tta
 ```
 
 
