@@ -141,6 +141,53 @@ class BasicResBlock(nn.Module):
         
         # Final activation
         return self.act2(y)
+
+
+class AttentionGate(nn.Module):
+    def __init__(self, F_g, F_l):
+        super(AttentionGate, self).__init__()
+        self.W_g = nn.Sequential(
+            nn.Conv3d(F_g, F_g, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm3d(F_g)
+        )
+
+        self.W_x = nn.Sequential(
+            nn.Conv3d(F_l, F_l, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm3d(F_l)
+        )
+
+        self.psi = nn.Sequential(
+            nn.Conv3d(F_g, 1, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm3d(1),
+            nn.Sigmoid()
+        )
+
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self, g, x):
+        """
+        Forward pass of the attention gate.
+
+        Parameters:
+        - g: Gating signal (coarser scale feature map), shape (B, C, H, W, D)
+        - x: Input feature map (skip connection from encoder), shape (B, C, H, W, D)
+        
+        Returns:
+        - Attention-weighted feature map, same shape as input x
+        """
+        g1 = self.W_g(g)  # shape (B, C, H, W, D)
+        x1 = self.W_x(x)  # shape (B, C, H, W, D)
+
+        # Element-wise addition and activation
+        psi = self.relu(g1 + x1)  # shape (B, C, H, W, D)
+
+        # Compute attention coefficients
+        psi = self.psi(psi)  # shape (B, 1, H, W, D)
+
+        # Apply attention coefficients
+        return x * psi  # shape (B, C, H, W, D)
+
+
     
 class ResidualMambaEncoder(nn.Module):
     def __init__(self,
@@ -316,6 +363,9 @@ class ResidualMambaEncoder(nn.Module):
         return output
 
 
+
+
+
 class UNetResDecoder(nn.Module):
     def __init__(self,
                  encoder,
@@ -337,11 +387,15 @@ class UNetResDecoder(nn.Module):
 
         upsample_layers = []
 
+        self.attention_gates = nn.ModuleList()
+
         seg_layers = []
         for s in range(1, n_stages_encoder):
             input_features_below = encoder.output_channels[-s]
             input_features_skip = encoder.output_channels[-(s + 1)]
             stride_for_upsampling = encoder.strides[-s]
+
+            self.attention_gates.append(AttentionGate(F_g=input_features_skip, F_l=input_features_skip))
 
             upsample_layers.append(UpsampleLayer(
                 conv_op = encoder.conv_op,
@@ -391,6 +445,8 @@ class UNetResDecoder(nn.Module):
         seg_outputs = []
         for s in range(len(self.stages)):
             x = self.upsample_layers[s](lres_input)
+            g = x
+            skips[-(s+2)] = self.attention_gates[s](g, skips[-(s+2)])
             x = torch.cat((x, skips[-(s+2)]), 1)
             x = self.stages[s](x)
             if self.deep_supervision:
