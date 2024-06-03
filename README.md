@@ -18,9 +18,9 @@
 
 
 
-`!cp -rp /content/drive/MyDrive/nnUNet/U-Mamba/nnUNet_raw /content/Att-UMamba/data`
+`!cp -rp YOUR_DATA_PATH /content/Att-UMamba/data`
 
-`!cp -rp /content/drive/MyDrive/nnUNet/U-Mamba/nnUNet_preprocessed /content/Att-UMamba/data`
+`!cp -rp YOUR_PREPROCESSED_DATA_PATH /content/Att-UMamba/data`
 
 
 
