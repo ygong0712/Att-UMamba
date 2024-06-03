@@ -19,6 +19,7 @@
 
 
 `!cp -rp /content/drive/MyDrive/nnUNet/U-Mamba/nnUNet_raw /content/Att-UMamba/data`
+
 `!cp -rp /content/drive/MyDrive/nnUNet/U-Mamba/nnUNet_preprocessed /content/Att-UMamba/data`
 
 
