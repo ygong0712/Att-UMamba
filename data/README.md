@@ -1,5 +1,3 @@
-Download dataset [here](https://drive.google.com/drive/folders/1DmyIye4Gc9wwaA7MVKFVi-bWD2qQb-qN?usp=sharing)
-
 Please organize the dataset as follows:
 
 ```
