@@ -1,4 +1,4 @@
-# nnU-Mamba
+# Att-UMamba
  
 ## Installation for Google Colab
 
