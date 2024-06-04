@@ -9,20 +9,18 @@
 
 `!pip install mamba-ssm --no-cache-dir`
 
-`!git clone https://github.com/ygong0712/nnU-Mamba`
+`!git clone https://github.com/ygong0712/Att-UMamba`
 
-`%cd /content/nnU-Mamba/umamba`
+`%cd /content/Att-UMamba/umamba`
 
 `!pip install -e .`
 
 
-`!rm -rf /content/nnU-Mamba/data/nnUNet_raw`
 
-`!rm -rf /content/nnU-Mamba/data/nnUNet_preprocessed`
 
-`!rm -rf /content/nnU-Mamba/data/nnUNet_results`
+`!cp -rp YOUR_DATA_PATH /content/Att-UMamba/data`
 
-`!cp -rp YOUR_PATH /content/nnU-Mamba/data`
+`!cp -rp YOUR_PREPROCESSED_DATA_PATH /content/Att-UMamba/data`
 
 
 
