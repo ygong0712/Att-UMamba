@@ -15,7 +15,7 @@ from nnunetv2.utilities.plans_handling.plans_handler import ConfigurationManager
 from dynamic_network_architectures.building_blocks.helper import get_matching_instancenorm, convert_dim_to_conv_op
 from dynamic_network_architectures.initialization.weight_init import init_last_bn_before_add_to_0
 from nnunetv2.utilities.network_initialization import InitWeights_He
-from mamba_ssm import Mamba2
+from mamba_ssm import Mamba
 from dynamic_network_architectures.building_blocks.helper import maybe_convert_scalar_to_list, get_matching_pool_op
 from torch.cuda.amp import autocast
 from dynamic_network_architectures.building_blocks.residual import BasicBlockD
@@ -40,7 +40,7 @@ class UpsampleLayer(nn.Module):
         return x
 
 class MambaLayer(nn.Module):
-    def __init__(self, dim, d_state = 64, d_conv = 4, expand = 2):
+    def __init__(self, dim, d_state = 16, d_conv = 4, expand = 2):
         super().__init__()
         self.dim = dim
         self.norm = nn.LayerNorm(dim)
