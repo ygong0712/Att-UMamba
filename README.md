@@ -1,6 +1,6 @@
 # Att-UMamba
 
-## 🔥 Model Overview 
+## Model Overview 
  <div align="center"><img width="880" height="350" src=""></div>
  
 ## 3D whole-body CT/PET PSMA Visualization
