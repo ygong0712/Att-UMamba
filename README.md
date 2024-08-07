@@ -1,8 +1,9 @@
 # Att-UMamba
 
 
-##3D whole-body CT/PET PSMA Visualization
+## 3D whole-body CT/PET PSMA Visualization
 <div align="center"><img width="420" height="420" src=""></div>
+
 ## Installation for Google Colab
 
 ### Environment setup
