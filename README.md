@@ -23,7 +23,7 @@
 
 
 
-
+### Download dataset
 `!cp -rp YOUR_DATA_PATH /content/Att-UMamba/data`
 
 `!cp -rp YOUR_PREPROCESSED_DATA_PATH /content/Att-UMamba/data`
@@ -31,7 +31,7 @@
 
 
 
-### Python packages
+### Install Python packages
 
 ```bash
 import torch
