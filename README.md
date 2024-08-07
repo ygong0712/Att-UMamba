@@ -1,7 +1,7 @@
 # Att-UMamba
 
 ## Model Overview 
- <div align="center"><img width="880" height="350" src="https://github.com/ygong0712/Att-UMamba/blob/main/data/nn-UMamba.drawio.png"></div>
+ <div align="center"><img width="880" height="550" src="https://github.com/ygong0712/Att-UMamba/blob/main/data/nn-UMamba.drawio.png"></div>
  
 ## 3D whole-body CT/PET PSMA Visualization
 <div align="center"><img width="420" height="420" src="https://github.com/ygong0712/Att-UMamba/blob/main/data/PSMA-3D_visualization.gif"></div>
