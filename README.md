@@ -51,7 +51,7 @@ nnUNetv2_plan_and_preprocess -d DATASET_ID --verify_dataset_integrity
 - Train 3D Att-UMamba model
 
 ```bash
-nnUNetv2_train DATASET_ID 3d_fullres all -tr nnUNetTrainerUMambaBot
+nnUNetv2_train DATASET_ID 3d_fullres all -tr nnUNetTrainerUMambaEnc
 ```
 
 
@@ -61,7 +61,7 @@ nnUNetv2_train DATASET_ID 3d_fullres all -tr nnUNetTrainerUMambaBot
 - Predict testing cases with the `Att-UMamba` model
 
 ```bash
-nnUNetv2_predict -i INPUT_FOLDER -o OUTPUT_FOLDER -d DATASET_ID -c CONFIGURATION -f all -tr nnUNetTrainerUMambaBot --disable_tta
+nnUNetv2_predict -i INPUT_FOLDER -o OUTPUT_FOLDER -d DATASET_ID -c CONFIGURATION -f all -tr nnUNetTrainerUMambaEnc --disable_tta
 ```
 
 
